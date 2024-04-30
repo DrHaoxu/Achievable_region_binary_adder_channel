@@ -1,4 +1,4 @@
-%This code depicts the achievable region of the two-user binary adder witretap channel proposed in the paper 
+%This Matlab code depicts the achievable region of the two-user binary adder witretap channel proposed in the paper 
 %"A new cchievable region of the K-User MAC wiretap channel with confidential and open messages under strong secrecy",
 %and compare it with the region proposed in "Achievable regions and precoder designs for the multiple access wiretap
 %channels with confidential and open messages".
