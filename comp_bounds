@@ -1,0 +1,57 @@
+%This function computes the upper bounds a1,b,c1,a2,c2
+function [a1,b,c1,a2,c2]=comp_bounds(alpha,beta,q1,q2,H_N1,H_N2)
+%%
+%Compute H(Y)
+prob = zeros(4,1);
+prob(1) = (1-alpha)*(1-beta)*(1-q1);
+prob(2) = (1-alpha)*(1-beta)*q1 + (1-alpha)*beta*(1-q1) + alpha*(1-beta)*(1-q1);
+prob(3) = (1-alpha)*beta*q1 + alpha*(1-beta)*q1 + alpha*beta*(1-q1);
+prob(4) = alpha*beta*q1;
+index_posi = find(prob>0);
+H_Y = - sum(prob(index_posi).*log2(prob(index_posi)));
+%Compute H(Y| X1)
+prob = zeros(3,1);
+prob(1) = (1-beta)*(1-q1);
+prob(2) = (1-beta)*q1 + beta*(1-q1);
+prob(3) = beta*q1;
+index_posi = find(prob>0);
+H_Y_X1 = - sum(prob(index_posi).*log2(prob(index_posi)));
+%Compute H(Y| X2)
+prob = zeros(3,1);
+prob(1) = (1-alpha)*(1-q1);
+prob(2) = (1-alpha)*q1 + alpha*(1-q1);
+prob(3) = alpha*q1;
+index_posi = find(prob>0);
+H_Y_X2 = - sum(prob(index_posi).*log2(prob(index_posi)));
+%Compute H(Z)
+prob = zeros(4,1);
+prob(1) = (1-alpha)*(1-beta)*(1-q2);
+prob(2) = (1-alpha)*(1-beta)*q2 + (1-alpha)*beta*(1-q2) + alpha*(1-beta)*(1-q2);
+prob(3) = (1-alpha)*beta*q2 + alpha*(1-beta)*q2 + alpha*beta*(1-q2);
+prob(4) = alpha*beta*q2;
+index_posi = find(prob>0);
+H_Z = - sum(prob(index_posi).*log2(prob(index_posi)));
+%Compute H(Z| X1)
+prob = zeros(3,1);
+prob(1) = (1-beta)*(1-q2);
+prob(2) = (1-beta)*q2 + beta*(1-q2);
+prob(3) = beta*q2;
+index_posi = find(prob>0);
+H_Z_X1 = - sum(prob(index_posi).*log2(prob(index_posi)));
+%Compute H(Z| X2)
+prob = zeros(3,1);
+prob(1) = (1-alpha)*(1-q2);
+prob(2) = (1-alpha)*q2 + alpha*(1-q2);
+prob(3) = alpha*q2;
+index_posi = find(prob>0);
+H_Z_X2 = - sum(prob(index_posi).*log2(prob(index_posi)));
+
+%%
+%Compute the upper bounds a1,b,c1,a2,c2
+ub1 = max(0,H_Y_X2 - H_N1 - H_Z + H_Z_X1);%[I(X_1; Y| X_2) - I(X_1; Z)]^+
+ub2 = max(0,H_Y - H_N1 - H_Z + H_N2);%[I(X_1, X_2; Y) - I(X_1, X_2; Z)]^+
+a1 = min(ub1,ub2);
+b = H_Y_X1 - H_N1;%I(X_2; Y| X_1)
+c1 = max(0,H_Y - H_N1 - H_Z + H_Z_X1);%[I(X_1, X_2; Y) - I(X_1; Z)]^+
+a2 = max(0,H_Y_X2 - H_N1 - H_Z_X2 + H_N2);%[I(X_1; Y| X_2) - I(X_1; Z| X_2)]^+
+c2 = max(0,H_Y - H_N1 - H_Z_X2 + H_N2);%[I(X_1, X_2; Y) - I(X_1; Z| X_2)]^+
