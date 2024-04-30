@@ -1,0 +1,161 @@
+%This code depicts the achievable region of the two-user binary adder witretap channel proposed in the paper 
+%"A new cchievable region of the K-User MAC wiretap channel with confidential and open messages under strong secrecy",
+%and compare it with the region proposed in "Achievable regions and precoder designs for the multiple access wiretap
+%channels with confidential and open messages".
+clear
+clc
+t1=clock;
+q1 = 0.5;
+q2 = 0.75;
+H_N1 = - q1*log2(q1) - (1 - q1)*log2(1 - q1);%H(N1)
+H_N2 = - q2*log2(q2) - (1 - q2)*log2(1 - q2);%H(N2)
+step = 0.01;%sampling size of alpha and beta
+[all_alpha,all_beta] = meshgrid(0:step:1, 0:step:1);
+[L1,L2] = size(all_alpha);
+all_a1 = zeros(L1,L2);
+all_a2 = zeros(L1,L2);
+all_b = zeros(L1,L2);
+all_c1 = zeros(L1,L2);
+all_c2 = zeros(L1,L2);
+Vertices1 = [0 0];%Record the vertices of {\hat{\cal R}}_{old}. Each row records a point. Its row size will change.
+Vertices2 = [0 0];%Record the vertices of {\hat{\cal R}}_{new}^{1}. Each row records a point. Its row size will change.
+k1 = 1;%Count the number of vertices for the old region
+k2 = 1;%Count the number of vertices for the new region
+for l1 = 1:L1
+    for l2 = 1:L2
+        alpha = all_alpha(l1,l2);
+        beta = all_beta(l1,l2);
+        [a1,b,c1,a2,c2]=comp_bounds(alpha,beta,q1,q2,H_N1,H_N2);%For given alpha and beta, compute the upper bounds
+        all_a1(l1,l2) = a1;
+        all_a2(l1,l2) = a2;
+        all_b(l1,l2) = b;
+        all_c1(l1,l2) = c1;
+        all_c2(l1,l2) = c2;
+        %%
+        %Record the vertices of {\hat{\cal R}}_{old}. The row size of Vertices1 changes in this step.
+        %We no longer record the point (0,0) since it is already recorded.
+        if c1 ~= 0%Case1: there is only one point (0,0) and it is already recorded
+            if a1 == 0%Case2: the region is a line segment with two vertices
+                Vertices1(k1+1,1:2) = [0,min(b,c1)];
+                k1 = k1 + 1;
+            else
+                if b <= c1-a1%Case3: the region is a rectangular with four vertices
+                    Vertices1(k1+1:k1+3,1:2) = [a1 0;a1 b;0 b];
+                    k1 = k1 + 3;
+                else if b > c1-a1 && b <= c1%Case4: the region is a pentagon with five vertices
+                        Vertices1(k1+1:k1+4,1:2) = [a1 0;a1 c1-a1;c1-b b;0 b];
+                        k1 = k1 + 4;
+                else%Case5: the region is a trapezoidal with four vertices
+                    Vertices1(k1+1:k1+3,1:2) = [a1 0;a1 c1-a1;0 c1];
+                    k1 = k1 + 3;
+                end
+                end
+            end
+        end
+        %%
+        %Record the vertices of {\hat{\cal R}}_{new}^{1}. The row size of Vertices2 changes in this step.
+        %We no longer record the point (0,0) since it is already recorded.
+        if c2 ~= 0%Case1: there is only one point (0,0) and it is already recorded
+            if a2 == 0%Case2: the region is a line segment with two vertices
+                Vertices2(k2+1,1:2) = [0,min(b,c2)];
+                k2 = k2 + 1;
+            else
+                if b <= c2-a2%Case3: the region is a rectangular with four vertices
+                    Vertices2(k2+1:k2+3,1:2) = [a2 0;a2 b;0 b];
+                    k2 = k2 + 3;
+                else if b > c2-a2 && b <= c2%Case4: the region is a pentagon with five vertices
+                        Vertices2(k2+1:k2+4,1:2) = [a2 0;a2 c2-a2;c2-b b;0 b];
+                        k2 = k2 + 4;
+                else%Case5: the region is a trapezoidal with four vertices
+                    Vertices2(k2+1:k2+3,1:2) = [a2 0;a2 c2-a2;0 c2];
+                    k2 = k2 + 3;
+                end
+                end
+            end
+        end
+    end
+end
+
+%%
+%There are many points on the x-axis and y-axis. To reduce the computational time in depicting the convex hull, 
+%we only keep three of them, i.e., (0,0) and the two points with the maximum x or y value on the x-axis and y-axis.
+%Note that this does not change the convex hull.
+index1 = find(Vertices1(:,1)==0);
+max1 = max(Vertices1(index1,2));
+Vertices1(index1,:) = [];
+index2 = find(Vertices1(:,2)==0);
+max2 = max(Vertices1(index2,1));
+Vertices1(index2,:) = [];
+temp = [0 0;0 max1;max2,0];%Keep three points on the x-axis and y-axis.
+Vertices1 = [temp; Vertices1];
+
+%Do the same thing for Vertices2.
+index1 = find(Vertices2(:,1)==0);
+max1 = max(Vertices2(index1,2));
+Vertices2(index1,:) = [];
+index2 = find(Vertices2(:,2)==0);
+max2 = max(Vertices2(index2,1));
+Vertices2(index2,:) = [];
+temp = [0 0;0 max1;max2,0];
+Vertices2 = [temp; Vertices2];
+
+[eff_point1,~] = convhull(Vertices1);%Return the indices of the extreme points in Vertices1.
+[eff_point2,~] = convhull(Vertices2);%Return the indices of the extreme points in Vertices2.
+
+figure;hold on
+subplot(2,2,1);
+plot(Vertices1(eff_point1,1),Vertices1(eff_point1,2),'r','linewidth',1)
+xlabel('R_1^s','fontsize',14);ylabel('R_2^o','fontsize',14);
+xlim([0,0.016]);ylim([0,0.5]);
+subplot(2,2,2);
+plot(Vertices2(eff_point2,1),Vertices2(eff_point2,2),'b','linewidth',1)
+xlabel('R_1^s','fontsize',14);ylabel('R_2^o','fontsize',14);
+xlim([0,0.016]);ylim([0,0.5]);
+subplot(2,2,[3,4]);
+plot(Vertices2(eff_point2,1),Vertices2(eff_point2,2),'b','linewidth',1)
+hold on
+plot(Vertices1(eff_point1,1),Vertices1(eff_point1,2),'r','linewidth',1)
+xlabel('R_1^s','fontsize',14);ylabel('R_2^o','fontsize',14);
+xlim([0,0.016]);ylim([0,0.5]);
+
+figure;surf(all_alpha,all_beta,all_a1);
+xlabel('\alpha','fontsize',14);ylabel('\beta','fontsize',14);zlabel('a_1','fontsize',14);colorbar
+
+figure;surf(all_alpha,all_beta,all_c1);
+xlabel('\alpha','fontsize',14);ylabel('\beta','fontsize',14);zlabel('c_1','fontsize',14);colorbar
+
+figure;surf(all_alpha,all_beta,all_a2);
+xlabel('\alpha','fontsize',14);ylabel('\beta','fontsize',14);zlabel('a_2','fontsize',14);colorbar
+
+figure;surf(all_alpha,all_beta,all_c2);
+xlabel('\alpha','fontsize',14);ylabel('\beta','fontsize',14);zlabel('c_2','fontsize',14);colorbar
+
+figure;surf(all_alpha,all_beta,all_b);
+xlabel('\alpha','fontsize',14);ylabel('\beta','fontsize',14);zlabel('b','fontsize',14);colorbar
+
+%%
+%Show that a point R0 in the new region can be separated from all poins in the old region by SVM.
+R = Vertices1(eff_point1,:);%All extreme points in Vertices1.
+R0 = Vertices2(733,:);%Choose the point (0.0148263, 0.440926) Vertices2
+cvx_begin quiet
+variable v(1,2)
+variable b
+minimize( norm(v) )
+subject to
+v*R0.' - b >= 1;
+for k=1:length(R)
+    v*R(k,:).' - b <= -1;
+end
+cvx_end
+zero_point = [0 b/v(1,2);b/v(1,1) 0];
+
+figure
+plot(Vertices2(eff_point2,1),Vertices2(eff_point2,2),'b','linewidth',1)
+hold on
+plot(Vertices1(eff_point1,1),Vertices1(eff_point1,2),'r','linewidth',1)
+plot(R0(1),R0(2),'*b','Markersize',10,'linewidth',1)
+plot(zero_point(:,1),zero_point(:,2),'k','linewidth',1)
+xlabel('R_1^s','fontsize',14);ylabel('R_2^o','fontsize',14);
+
+t2=clock;
+t=etime(t2,t1)
